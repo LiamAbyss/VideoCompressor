@@ -15,7 +15,10 @@ async fn compress(from_path: String, to_path: String) {
     };
 
     let res = command
-        .arg(format!("ffmpeg -i {} -vcodec libx265 -crf 28 -fpsmax 35 -tune zerolatency -preset medium {} -y", from_path, to_path))
+        .arg(format!(
+            "cpulimit -l 50 -- ffmpeg -i {} -vcodec libx265 -crf 28 -tune zerolatency -preset medium {} -y",
+            from_path, to_path
+        ))
         .output()
         .expect("failed to execute process");
 
@@ -36,7 +39,10 @@ async fn main() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() != 3 {
-        println!("Usage: {} <input_dir> <output_dir>", args[0]);
+        println!(
+            "Usage: {} <input_dir> <output_dir> <timeout> <nb_threads>",
+            args[0]
+        );
         return;
     }
 
@@ -44,7 +50,11 @@ async fn main() {
         let paths = fs::read_dir(&args[1]).unwrap();
 
         let mut tasks = vec![];
+        let mut i = 0;
         for path in paths {
+            if i == args[4].parse().unwrap() {
+                break;
+            }
             let path_clone = path.unwrap().path();
 
             if path_clone
@@ -69,11 +79,12 @@ async fn main() {
             println!("Compressing '{}' into '{}'", from_path, to_path);
 
             tasks.push(compress(from_path.to_owned(), to_path));
+            i += 1;
         }
 
         join_all(tasks).await;
 
-        // sleep 5 seconds
-        std::thread::sleep(std::time::Duration::from_secs(5));
+        // sleep X seconds
+        std::thread::sleep(std::time::Duration::from_secs(args[3].parse().unwrap()));
     }
 }
