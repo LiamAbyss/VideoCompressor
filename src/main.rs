@@ -38,7 +38,7 @@ async fn compress(from_path: String, to_path: String) {
 async fn main() {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() != 3 {
+    if args.len() != 5 {
         println!(
             "Usage: {} <input_dir> <output_dir> <timeout> <nb_threads>",
             args[0]
