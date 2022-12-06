@@ -11,3 +11,9 @@ version = "0.3.17"
 [dependencies.tokio]
 version = "1.13.0"
 features = ["full"]
+
+[dependencies.regex]
+version = "1.5.4"
+
+[dependencies.lazy_static]
+version = "1.4.0"
