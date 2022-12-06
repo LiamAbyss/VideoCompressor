@@ -12,11 +12,14 @@ async fn compress(from_path: String, to_path: String) {
     } else {
         command = Command::new("sh");
         command.arg("-c");
+        command.arg("cpulimit -l 50 -- ");
     };
+
+    println!("Compressing '{}' into '{}'", from_path, to_path);
 
     let res = command
         .arg(format!(
-            "cpulimit -l 50 -- ffmpeg -i {} -vcodec libx265 -crf 28 -tune zerolatency -preset medium {} -y",
+            "ffmpeg -i {} -vcodec libx265 -crf 28 -tune zerolatency -preset medium {} -y",
             from_path, to_path
         ))
         .output()
@@ -68,7 +71,7 @@ async fn main() {
                 continue;
             }
 
-            let from_path = path_clone.to_str().unwrap();
+            let from_path = path_clone.to_str().unwrap().to_string();
 
             let to_path = format!(
                 "{}/{}",
@@ -76,9 +79,9 @@ async fn main() {
                 path_clone.file_name().unwrap().to_str().unwrap()
             );
 
-            println!("Compressing '{}' into '{}'", from_path, to_path);
-
-            tasks.push(compress(from_path.to_owned(), to_path));
+            tasks.push(tokio::spawn(async move {
+                compress(from_path.to_string(), to_path.to_string()).await;
+            }));
             i += 1;
         }
 
